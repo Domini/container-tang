@@ -1,0 +1,37 @@
+name: Tag on update
+on:
+  schedule:
+  - cron: '*/5 * * * *'
+jobs:
+  tag-on-update:
+    runs-on: ubuntu-slim
+    permissions:
+      contents: write
+    steps:
+    - id: generate-tags
+      run: |
+        curl \
+          https://deb.debian.org/debian/dists/trixie/main/binary-amd64/Packages.xz                   --output          Packages.amd64.xz \
+          https://deb.debian.org/debian/dists/trixie-updates/main/binary-amd64/Packages.xz           --output  updates-Packages.amd64.xz \
+          https://deb.debian.org/debian-security/dists/trixie-security/main/binary-amd64/Packages.xz --output security-Packages.amd64.xz \
+          https://deb.debian.org/debian/dists/trixie/main/binary-arm64/Packages.xz                   --output          Packages.arm64.xz \
+          https://deb.debian.org/debian/dists/trixie-updates/main/binary-arm64/Packages.xz           --output  updates-Packages.arm64.xz \
+          https://deb.debian.org/debian-security/dists/trixie-security/main/binary-arm64/Packages.xz --output security-Packages.arm64.xz \
+          --output-dir ${{ runner.temp }} \
+          --remote-time \
+          --fail \
+          --parallel
+        TANG_COMMON_VERSION_AMD64="$(xzgrep -P --null-data --only-matching '(?s)(?:^|(?<=\n)\n)Package: tang-common\n.+?(?:\n(?=\n)|$)' ${{ runner.temp }}/*Packages.amd64.xz | grep -P --text --only-matching '(?<=^Version: ).+$' | sort -r --version-sort | head -n 1)"
+        TANG_COMMON_VERSION_ARM64="$(xzgrep -P --null-data --only-matching '(?s)(?:^|(?<=\n)\n)Package: tang-common\n.+?(?:\n(?=\n)|$)' ${{ runner.temp }}/*Packages.arm64.xz | grep -P --text --only-matching '(?<=^Version: ).+$' | sort -r --version-sort | head -n 1)"
+        printf 'TAG=%s\n' "amd64-${TANG_COMMON_VERSION_AMD64}_arm64-${TANG_COMMON_VERSION_ARM64}" >>"$GITHUB_OUTPUT"
+    - id: tag-exists
+      run: |
+        HTTP_CODE="$(curl --head "${{ github.server_url }}/${{ github.repository }}/releases/tag/${{ steps.generate-tags.outputs.TAG }}" --output /dev/null --write-out '%{http_code}')"
+        printf 'HTTP_CODE=%s\n' "$HTTP_CODE" >>"$GITHUB_OUTPUT"
+    - if: ${{ success() && steps.tag-exists.outputs.HTTP_CODE == 404 }}
+      run: |
+        curl -X POST ${{ github.api_url }}/repos/${{ github.repository }}/git/refs \
+          -H 'Authorization: Bearer ${{ secrets.RECURSIVE_ACTIONS }}' \
+          -H 'Accept: application/vnd.github+json' \
+          --data-raw '{"ref":"refs/tags/${{ steps.generate-tags.outputs.TAG }}","sha":"${{ github.sha }}"}' \
+          --fail
