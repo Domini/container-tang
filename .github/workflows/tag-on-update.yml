@@ -21,8 +21,8 @@ jobs:
           --remote-time \
           --fail \
           --parallel
-        TANG_COMMON_VERSION_AMD64="$(xzgrep -P --null-data --only-matching '(?s)(?:^|(?<=\n)\n)Package: tang-common\n.+?(?:\n(?=\n)|$)' ${{ runner.temp }}/*Packages.amd64.xz | grep -P --text --only-matching '(?<=^Version: ).+$' | sort -r --version-sort | head -n 1)"
-        TANG_COMMON_VERSION_ARM64="$(xzgrep -P --null-data --only-matching '(?s)(?:^|(?<=\n)\n)Package: tang-common\n.+?(?:\n(?=\n)|$)' ${{ runner.temp }}/*Packages.arm64.xz | grep -P --text --only-matching '(?<=^Version: ).+$' | sort -r --version-sort | head -n 1)"
+        TANG_COMMON_VERSION_AMD64="$(xzcat ${{ runner.temp }}/*Packages.amd64.xz | grep -P --null-data --only-matching '(?s)(?:^|(?<=\n)\n)Package: tang-common\n.+?(?:\n(?=\n)|$)' | grep -P --text --only-matching '(?<=^Version: ).+$' | sort -r --version-sort | head -n 1)"
+        TANG_COMMON_VERSION_ARM64="$(xzcat ${{ runner.temp }}/*Packages.arm64.xz | grep -P --null-data --only-matching '(?s)(?:^|(?<=\n)\n)Package: tang-common\n.+?(?:\n(?=\n)|$)' | grep -P --text --only-matching '(?<=^Version: ).+$' | sort -r --version-sort | head -n 1)"
         printf 'TAG=%s\n' "amd64-${TANG_COMMON_VERSION_AMD64}_arm64-${TANG_COMMON_VERSION_ARM64}" >>"$GITHUB_OUTPUT"
     - id: tag-exists
       run: |
