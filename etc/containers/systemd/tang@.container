@@ -1,0 +1,10 @@
+[Container]
+AutoUpdate=registry
+ContainerName=tang-%i
+Image=ghcr.io/domini/tang:latest
+Mount=type=volume,source=tang-db@.volume,target=/var/lib/tang
+Pull=newer
+ReadOnly=true
+
+[Service]
+Restart=always
