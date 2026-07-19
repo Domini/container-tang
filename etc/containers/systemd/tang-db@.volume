@@ -1,7 +1,7 @@
 [Volume]
-GID=65532
+PodmanArgs=--gid 65532
+PodmanArgs=--uid 65532
 ServiceName=tang-db-volume@
-UID=65532
 VolumeName=tang-%i-db
 
 [Service]
