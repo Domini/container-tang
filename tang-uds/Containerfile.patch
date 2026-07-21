@@ -1,0 +1,109 @@
+3,4c3,4
+< name: Static (Debian)
+< image: dhi.io/static
+---
+> name: tang-uds
+> image: ghcr.io/domini/tang-uds
+7,9c7
+<   - "20250419"
+<   - 20250419-debian
+<   - 20250419-debian13
+---
+>   - '%TANG_COMMON_VERSION%'
+13,15d10
+< vars:
+<   CA_VERSION: 20250419+dhi2
+<   VERSION: "20250419"
+22,26d16
+<     - '!cdebconf'
+<     - '!debconf'
+<     - '!dpkg'
+<     - '!gawk'
+<     - '!gcc-14'
+28,60d17
+<     - '!glibc'
+<     - '!gmp'
+<     - '!install-info'
+<     - '!libacl1'
+<     - '!libbz2-1.0'
+<     - '!libc6'
+<     - '!libdebian-installer'
+<     - '!libdebian-installer4'
+<     - '!libelogind0'
+<     - '!libgcc-s1'
+<     - '!libgmp10'
+<     - '!liblzma5'
+<     - '!libmd'
+<     - '!libmd0'
+<     - '!libmpfr6'
+<     - '!libnewt0.52'
+<     - '!libpcre2-8-0'
+<     - '!libreadline8t64'
+<     - '!libselinux'
+<     - '!libselinux1'
+<     - '!libsigsegv'
+<     - '!libsigsegv2'
+<     - '!libslang2'
+<     - '!libssl3t64'
+<     - '!libtextwrap'
+<     - '!libtextwrap1'
+<     - '!libtinfo6'
+<     - '!libzstd1'
+<     - '!mawk'
+<     - '!mpfr4'
+<     - '!ncurses'
+<     - '!newt'
+<     - '!openssl'
+62,71d18
+<     - '!original-awk'
+<     - '!pcre2'
+<     - '!readline'
+<     - '!readline-common'
+<     - '!slang2'
+<     - '!tar'
+<     - '!texinfo'
+<     - '!xz-utils'
+<     - '!zlib'
+<     - '!zlib1g'
+73,74c20,24
+<     - ca-certificates=20250419+dhi2
+<     - tzdata
+---
+>     - jose
+>     - libhttp-parser2.9
+>     - libjose0
+>     - socat
+>     - tang-common=%TANG_COMMON_VERSION%
+76d25
+<   root: true
+87,99c36,51
+< os-release:
+<   name: Docker Hardened Images (Debian)
+<   id: debian
+<   version-id: "13"
+<   version-codename: trixie
+<   pretty-name: Docker Hardened Images/Debian GNU/Linux 13 (trixie)
+<   home-url: https://docker.com/products/hardened-images/
+<   bug-report-url: https://docker.com/support/
+< environment:
+<   SSL_CERT_FILE: /etc/ssl/certs/ca-certificates.crt
+< annotations:
+<   org.opencontainers.image.description: A minimal static image
+<   org.opencontainers.image.licenses: MPL-2.0 AND MIT
+---
+> paths:
+>   - type: directory
+>     path: /var/lib/tang
+>     uid: 65532
+>     gid: 65532
+>     mode: "0750"
+>   - type: directory
+>     path: /dev/shm/tang-socket
+>     uid: 65532
+>     gid: 65532
+>     mode: "1750"
+> entrypoint:
+>   - /bin/socat
+> cmd:
+>   - UNIX-LISTEN:/dev/shm/tang-socket/tang.sock,mode=1640,fork
+>   - EXEC:'/usr/libexec/tangd /var/lib/tang'
